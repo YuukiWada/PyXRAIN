@@ -29,7 +29,7 @@ pip install numpy matplotlib
 ```
 git clone https://github.com/YuukiWada/PyXRAIN.git
 ```
-としてクローンしてください。またライブラリのパスを通すために、~/.zshrcや~/.bashrcなどに
+としてクローンしてください。またライブラリのパスを通すために、`~/.zshrc`や`~/.bashrc`などに
 ```
 export PYTHONPATH="/path-to-library/PyXRAIN/lib:$PYTHONPATH"
 ```

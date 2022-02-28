@@ -6,7 +6,8 @@ import sys
 
 if __name__ == "__main__":
     input_file = sys.argv[1]
-    output_file = sys.argv[2]
+    output_folder = sys.argv[2]
+    output_file = output_folder+"/"+input_file.split("/")[-1]+".csv"
     radar = xrain(input_file)
     data = radar.ppi
     np.savetxt(output_file, data, delimiter=",", fmt="%.2f")
