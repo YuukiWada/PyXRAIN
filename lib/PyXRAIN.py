@@ -20,7 +20,7 @@ class xrain:
         self.range_min = self.par[19]
         self.range_max = self.par[20]
         self.range_step = self.par[21]
-        self.azimuth_num = self.par[23]
+        self.az_num = self.par[23]
         self.date = self.par[2][0]+"-"+self.par[2][1]+"-"+self.par[2][2]
         self.time = self.par[3][0]+":"+self.par[3][1]+":00"
         self.obs_start = self.par[17][0]+":"+self.par[17][1]+":"+self.par[17][2]
@@ -31,15 +31,15 @@ class xrain:
 
     def credit(self):
         print("")
-        print("    -------------------------------------------------- ")
-        print("   | 国土交通省 XRAIN バイナリ解析 Python ライブラリ  |")
-        print("   | Version 1.0 (2022年2月28日)                      |")
-        print("   | 作成: 和田有希 (大阪大学大学院工学研究科)        |")
-        print("   | https://github.com/YuukiWada/PyXRAIN             |")
-        print("   |                                                  |")
-        print("   | 本ソフトウェアを用いて生じた不利益・損害について |")
-        print("   | 作成者は一切の責任を負いません。                 |")
-        print("    -------------------------------------------------- ")
+        print("  ------------------------------------------------------")
+        print("     国土交通省 XRAIN バイナリ解析 Python ライブラリ")
+        print("     Version 1.0 (2022年2月28日)")
+        print("     作成: 和田有希 (大阪大学大学院工学研究科)")
+        print("     https://github.com/YuukiWada/PyXRAIN")
+        print("")
+        print("     本ソフトウェアを用いて生じた不利益・損害について")
+        print("     作成者は一切の責任を負いません。")
+        print("  ------------------------------------------------------")
         print("")
 
     def read_par(self,input_file):
@@ -90,9 +90,9 @@ class xrain:
         f = open(input_file, "rb")
         data = f.read()
         num_rng = par[22]
-        num_azi = par[23]
-        value = np.zeros((num_azi, num_rng))
-        for i in range(num_azi):
+        num_az = par[23]
+        value = np.zeros((num_az, num_rng))
+        for i in range(num_az):
             for j in range(num_rng):
                 index = 512+i*(16+2*num_rng)+(16+2*j)
                 value[i,j] = int(binascii.hexlify(data[index:index+2]),16)
@@ -108,11 +108,11 @@ class xrain:
 
     def read_sect(self,input_file):
         num_rng = self.par[22]
-        num_azi = self.par[23]
+        num_az = self.par[23]
         sect_info=list()
         f = open(input_file, "rb")
         data = f.read()
-        for i in range(num_azi):
+        for i in range(num_az):
             index = 512+i*(16+2*num_rng)
             sect_info.append([int(binascii.hexlify(data[index:index+2]),16)/100.0,int(binascii.hexlify(data[index+2:index+4]),16)/100.0,\
                               int(binascii.hexlify(data[index+4:index+6]),16)/100.0,int(binascii.hexlify(data[index+6:index+8]),16)/100.0])
@@ -142,7 +142,7 @@ class xrain:
         index = obs_id.index(self.par[1])
         return type_name[index]
 
-    def show_par(self):
+    def parameter(self):
         par = self.par
         status = ["正常","異常"]
         message = list()
