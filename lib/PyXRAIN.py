@@ -12,6 +12,7 @@ class xrain:
         self.sect = self.read_sect(input_file)
         self.lat = round(self.par[11][0]+(self.par[11][1]/60.0)+(self.par[11][2]/3600.0),4)
         self.lon = round(self.par[12][0]+(self.par[12][1]/60.0)+(self.par[12][2]/3600.0),4)
+        self.alt = self.par[13]
         self.az_start = self.sect[0]
         self.az_end = self.sect[1]
         self.el_start = self.sect[2]
@@ -26,6 +27,10 @@ class xrain:
         self.obs_start = self.par[17][0]+":"+self.par[17][1]+":"+self.par[17][2]
         self.obs_end = self.par[18][0]+":"+self.par[18][1]+":"+self.par[18][2]
         self.elv = self.par[9]
+        self.x = self.axis_x()
+        self.y = self.axis_y()
+        self.z = self.axis_z()
+        self.rng = self.axis_range()
         if switch==True:
             self.credit()
 
@@ -119,6 +124,45 @@ class xrain:
         f.close()
         return sect_info
 
+    def axis_x(self):
+        n_rng = self.range_num
+        n_az = self.az_num
+        min_rng = self.range_min
+        step_rng = self.range_step
+        step_az = 360.0/n_az
+        rng = np.tile(min_rng+np.arange(n_rng+1)*step_rng/1000.0, (n_az+1,1))
+        az = np.tile(np.arange(n_az+1)*step_az, (n_rng+1,1)).transpose()
+        x = rng*np.sin(az*math.pi/180)
+        return x
+
+    def axis_y(self):
+        n_rng = self.range_num
+        n_az = self.az_num
+        min_rng = self.range_min
+        step_rng = self.range_step
+        step_az = 360.0/n_az
+        rng = np.tile(min_rng+np.arange(n_rng+1)*step_rng/1000.0, (n_az+1,1))
+        az = np.tile(np.arange(n_az+1)*step_az, (n_rng+1,1)).transpose()
+        y = rng*np.cos(az*math.pi/180)
+        return y
+
+    def axis_z(self):
+        n_rng = self.range_num
+        min_rng = self.range_min
+        step_rng = self.range_step
+        rng = min_rng+(np.arange(n_rng)+0.5)*step_rng/1000.0
+        elv = self.elv
+        alt = self.alt
+        z = rng*np.tan(elv*math.pi/180.0)+alt/1000.0
+        return rng
+    
+    def axis_range(self):
+        n_rng = self.range_num
+        min_rng = self.range_min
+        step_rng = self.range_step
+        rng = min_rng+(np.arange(n_rng)+0.5)*step_rng/1000.0
+        return rng
+    
     def site(self):
         site_id = ["8105", "8106", "8107", "8108", "8109", "8205", "8206", "8207", "8208", "8209", "820a", "820b",\
                    "8305", "8306", "8405", "8406", "8407", "8408", "8409", "840a", "8505", "8506", "8507", "8508",\
