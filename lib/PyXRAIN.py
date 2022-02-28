@@ -13,10 +13,6 @@ class xrain:
         self.lat = round(self.par[11][0]+(self.par[11][1]/60.0)+(self.par[11][2]/3600.0),4)
         self.lon = round(self.par[12][0]+(self.par[12][1]/60.0)+(self.par[12][2]/3600.0),4)
         self.alt = self.par[13]
-        self.az_start = self.sect[0]
-        self.az_end = self.sect[1]
-        self.el_start = self.sect[2]
-        self.el_end = self.sect[3]
         self.range_num = self.par[22]
         self.range_min = self.par[19]
         self.range_max = self.par[20]
@@ -218,4 +214,14 @@ class xrain:
         for string in message:
             print(string)
 
+    def az_start(self,i):
+        return self.sect[i][0]
 
+    def az_end(self,i):
+        return self.sect[i][1]
+
+    def el_start(self,i):
+        return self.sect[i][2]
+
+    def el_end(self,i):
+        return self.sect[i][3]
