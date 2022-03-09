@@ -76,7 +76,6 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111)
     p = ax.pcolormesh(r, z, rhi, vmin=0.0, vmax=50.0, cmap=custom_color)
     pp = fig.colorbar(p, ax=ax, orientation="vertical")
-    pp.set_clim(0.0,50.0)
     pp.set_label("dBZ", fontname="Arial", fontsize=10)
     plt.xlabel("Radius [km]")
     plt.ylabel("Height [km]")
