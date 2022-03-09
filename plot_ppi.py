@@ -9,11 +9,11 @@ import sys
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-
 if __name__ == "__main__":
     # parameter settings
     input_file = sys.argv[1]
     radar = xrain(input_file)
+    radar.parameter()
     if radar.par[1]!="12":
         print("Error: this input file is not RZH0 (horizontal reflectivity).")
         exit()
@@ -35,7 +35,6 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111)
     p = ax.pcolormesh(x, y, zh, vmin=0.0, vmax=50.0, cmap=custom_color)
     pp = fig.colorbar(p, ax=ax, orientation="vertical")
-    pp.set_clim(0.0,50.0)
     pp.set_label("dBZ", fontname="Arial", fontsize=10)
     plt.xlabel("x [km]")
     plt.ylabel("y [km]")

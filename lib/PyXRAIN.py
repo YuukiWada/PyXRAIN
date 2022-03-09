@@ -47,42 +47,42 @@ class xrain:
         f = open(input_file, "rb")
         data = f.read()
         par = list()
-        par.append(binascii.hexlify(data[4:6]))                       # 0: observation site
-        par.append(binascii.hexlify(data[7]))                         # 1: data type
-        par.append([data[8:12],data[13:15],data[16:18]])              # 2: observation date
-        par.append([data[19:21],data[22:24]])                         # 3: observation time
-        if binascii.hexlify(data[33])=="01":                          # 4: status code
+        par.append(binascii.hexlify(data[4:6]).decode())                                    # 0: observation site
+        par.append(hex(data[7])[2:])                                                        # 1: data type
+        par.append([data[8:12].decode(),data[13:15].decode(),data[16:18].decode()])         # 2: observation date
+        par.append([data[19:21].decode(),data[22:24].decode()])                             # 3: observation time
+        if data[33]==1:                                                                     # 4: status code
             par.append(0)
         else:
             par.append(1)
-        par.append(float(binascii.hexlify(data[40:42]))/10.0)         # 5: rotation speed
-        if binascii.hexlify(data[42:44])=="0001":                     # 6: identification of PPI/CAPPI
+        par.append(float(binascii.hexlify(data[40:42]))/10.0)                               # 5: rotation speed
+        if binascii.hexlify(data[42:44]).decode()=="0001":                                  # 6: identification of PPI/CAPPI
             par.append("CAPPI")
         else:
             par.append("PPI")
-        par.append(int(binascii.hexlify(data[44:46]),16))             # 7: elevation step
-        par.append(int(binascii.hexlify(data[46:48]),16))             # 8: elevation step num
-        if int(binascii.hexlify(data[48:50]),16)>32767:               # 9: elevation angle
+        par.append(int(binascii.hexlify(data[44:46]),16))                                   # 7: elevation step
+        par.append(int(binascii.hexlify(data[46:48]),16))                                   # 8: elevation step num
+        if int(binascii.hexlify(data[48:50]),16)>32767:                                     # 9: elevation angle
             par.append((int(binascii.hexlify(data[48:50]),16)-2**16)/100.0)
         else:
             par.append(int(binascii.hexlify(data[48:50]),16)/100.0)
-        if binascii.hexlify(data[52:56])=="00000004":                 # 10: site status
+        if binascii.hexlify(data[52:56]).decode()=="00000004":                              # 10: site status
             par.append(0)
         else:
             par.append(1)
         par.append([int(binascii.hexlify(data[62:64]),16),int(binascii.hexlify(data[64:66]),16),int(binascii.hexlify(data[66:68]),16)]) # 11: latitude
         par.append([int(binascii.hexlify(data[68:70]),16),int(binascii.hexlify(data[70:72]),16),int(binascii.hexlify(data[72:74]),16)]) # 12: longitude
-        par.append(int(binascii.hexlify(data[74:78]),16)/100.0)       # 13: altitude (m)
-        par.append(int(binascii.hexlify(data[88:90]),16)/100.0)       # 14: horizontal power (kW)
-        par.append(int(binascii.hexlify(data[102:104]),16)/100.0)     # 15: vertical power (kW)
-        par.append(int(binascii.hexlify(data[110:112]),16))           # 16: transmission frequency (MHz)
-        par.append([data[128:130],data[131:133],data[134:136]])       # 17: observation start time
-        par.append([data[136:138],data[139:141],data[142:144]])       # 18: observation start time
-        par.append(int(binascii.hexlify(data[144:148]),16)/100.0)     # 19: range start (m)
-        par.append(int(binascii.hexlify(data[148:152]),16)/100.0)     # 20: range end (m)
-        par.append(int(binascii.hexlify(data[152:156]),16)/100.0)     # 21: range resolution (m)
-        par.append(int(binascii.hexlify(data[156:160]),16))           # 22: range num
-        par.append(int(binascii.hexlify(data[160:162]),16))           # 23: azimuth num
+        par.append(int(binascii.hexlify(data[74:78]),16)/100.0)                             # 13: altitude (m)
+        par.append(int(binascii.hexlify(data[88:90]),16)/100.0)                             # 14: horizontal power (kW)
+        par.append(int(binascii.hexlify(data[102:104]),16)/100.0)                           # 15: vertical power (kW)
+        par.append(int(binascii.hexlify(data[110:112]),16))                                 # 16: transmission frequency (MHz)
+        par.append([data[128:130].decode(),data[131:133].decode(),data[134:136].decode()])  # 17: observation start time
+        par.append([data[136:138].decode(),data[139:141].decode(),data[142:144].decode()])  # 18: observation start time
+        par.append(int(binascii.hexlify(data[144:148]),16)/100.0)                           # 19: range start (m)
+        par.append(int(binascii.hexlify(data[148:152]),16)/100.0)                           # 20: range end (m)
+        par.append(int(binascii.hexlify(data[152:156]),16)/100.0)                           # 21: range resolution (m)
+        par.append(int(binascii.hexlify(data[156:160]),16))                                 # 22: range num
+        par.append(int(binascii.hexlify(data[160:162]),16))                                 # 23: azimuth num
         f.close()
         return par
 
@@ -197,7 +197,7 @@ class xrain:
         message.append("   運用モード         : "+par[6])
         message.append("   CAPPI仰角数        : "+str(par[7]))
         message.append("   CAPPI仰角番号      : "+str(par[8]))
-        message.append("   CAPPI仰角          : "+str(par[7])+"度")
+        message.append("   CAPPI仰角          : "+str(par[9])+"度")
         message.append("   レーダーサイト緯度 : 北緯 "+str(lat)+"度")
         message.append("   レーダーサイト経度 : 東経"+str(lon)+"度")
         message.append("   レーダーサイト高度 : "+str(par[13])+" m")

@@ -10,4 +10,5 @@ if __name__ == "__main__":
     output_file = output_folder+"/"+input_file.split("/")[-1]+".csv"
     radar = xrain(input_file,False)
     data = radar.ppi
+    radar.parameter()
     np.savetxt(output_file, data, delimiter=",", fmt="%.2f")
