@@ -34,7 +34,7 @@ class xrain:
         print("")
         print("  ------------------------------------------------------")
         print("     国土交通省 XRAIN バイナリ解析 Python ライブラリ")
-        print("     Version 1.0 (2022年2月28日)")
+        print("     Version 1.1 (2023年5月5日)")
         print("     作成: 和田有希 (大阪大学大学院工学研究科)")
         print("     https://github.com/YuukiWada/PyXRAIN")
         print("")
@@ -126,7 +126,8 @@ class xrain:
         min_rng = self.range_min
         step_rng = self.range_step
         step_az = 360.0/n_az
-        rng = np.tile(min_rng+np.arange(n_rng+1)*step_rng/1000.0, (n_az+1,1))
+        elv = self.elv
+        rng = np.tile((min_rng+np.arange(n_rng+1)*step_rng/1000.0)*np.cos(elv*np.pi/180.0), (n_az+1,1))
         az = np.tile(np.arange(n_az+1)*step_az, (n_rng+1,1)).transpose()
         x = rng*np.sin(az*math.pi/180)
         return x
@@ -137,7 +138,9 @@ class xrain:
         min_rng = self.range_min
         step_rng = self.range_step
         step_az = 360.0/n_az
-        rng = np.tile(min_rng+np.arange(n_rng+1)*step_rng/1000.0, (n_az+1,1))
+        elv = self.elv
+        rng = np.tile((min_rng+np.arange(n_rng+1)*step_rng/1000.0)*np.cos(elv*np.pi/180.0), (n_az+1,1))
+        #rng = np.tile(min_rng+np.arange(n_rng+1)*step_rng/1000.0, (n_az+1,1))
         az = np.tile(np.arange(n_az+1)*step_az, (n_rng+1,1)).transpose()
         y = rng*np.cos(az*math.pi/180)
         return y
@@ -225,3 +228,121 @@ class xrain:
 
     def el_end(self,i):
         return self.sect[i][3]
+
+class composite:
+    def __init__(self,input_file,switch=True):
+        self.par = self.read_par(input_file)
+        if self.par[0] != 8001:
+            print("Error: input file is broken.")
+            exit()
+        self.date = self.par[1][0]+"-"+self.par[1][1]+"-"+self.par[1][2]
+        self.time = self.par[2][0]+":"+self.par[2][1]
+        self.nblock = self.par[3]
+        self.edge = self.calc_edge(self.par[4],self.par[5])
+        self.nmesh = self.calc_nmesh()
+        self.mesh = self.calc_mesh()
+        self.center = self.calc_center()
+        self.comp = self.extract_comp(input_file,self.edge, self.nmesh)
+            
+    def read_par(self,input_file):
+        f = open(input_file, "rb")
+        data = f.read()
+        par = list()
+        par.append(int(binascii.hexlify(data[2:4])))                                        # 0: date type (fixed to #8001)
+        par.append([data[8:12].decode(),data[13:15].decode(),data[16:18].decode()])         # 1: observation date
+        par.append([data[19:21].decode(),data[22:24].decode()])                             # 2: observation time
+        par.append(int(binascii.hexlify(data[42:44]),16))                                   # 3: block number
+        par.append(str(int(binascii.hexlify(data[48:50]))))                                # 4: mesh code (sw)
+        par.append(str(int(binascii.hexlify(data[50:52]))))                                 # 5: mesh code (ne)
+        f.close()
+        return par
+
+    def calc_edge(self,sw,ne):
+        west = float("1"+sw[2:4])
+        east = float("1"+ne[2:4])+1
+        south = float(sw[0:2])/1.5
+        north = (float(ne[0:2])+1.0)/1.5
+        edge = [[west,east],[south,north]]
+        return edge
+
+    def calc_nmesh(self):
+        edge = self.edge
+        nx = round((edge[0][1]-edge[0][0])/(11.25/3600.0))
+        ny = round((edge[1][1]-edge[1][0])/(7.5/3600.0))
+        nmesh = [nx,ny]
+        return nmesh
+        
+    def calc_mesh(self):
+        edge = self.edge
+        nmesh = self.nmesh
+        x = np.linspace(edge[0][0],edge[0][1],nmesh[0]+1)
+        y = np.linspace(edge[1][0],edge[1][1],nmesh[1]+1)
+        X,Y = np.meshgrid(x,y)
+        return X,Y
+
+    def calc_center(self):
+        dx = 11.25/7200.0
+        dy = 7.5/7200.0
+        edge = self.edge
+        nmesh = self.nmesh
+        x = np.linspace(edge[0][0]+dx,edge[0][1]-dx,nmesh[0])
+        y = np.linspace(edge[1][0]+dy,edge[1][1]-dy,nmesh[1])
+        X,Y = np.meshgrid(x,y)
+        return X,Y
+    
+    def extract_comp(self,input_file,edge,nmesh,outside=True):
+        comp = np.full((nmesh[1],nmesh[0]),-1.0,dtype=np.float16)
+        #comp = np.full((nmesh[1],nmesh[0]),-1.0)
+        index = 64
+        num_block = self.nblock
+        f = open(input_file, "rb")
+        data = f.read()
+
+        for i in range(num_block):
+            code_south = int(binascii.hexlify(data[index:index+1]),16)
+            code_west = int(binascii.hexlify(data[index+1:index+2]),16)
+            mesh_sec = str(binascii.hexlify(data[index+2:index+3]))
+            num_cell = int(binascii.hexlify(data[index+3:index+4]),16)
+
+            delta_x1 = code_west-int(self.par[4][2:4])
+            delta_y1 = code_south-int(self.par[4][0:2])
+            delta_x2 = int(mesh_sec[3])
+            delta_y2 = int(mesh_sec[2])
+            start_pos = [320*delta_x1+40*delta_x2, 320*delta_y1+40*delta_y2]
+            for j in range(num_cell):
+                index_read = index + 4 + 2*j*1600
+                rain = np.frombuffer(data[index_read:index_read+3200], dtype=">u2")
+                rain = rain.reshape(40,40)
+                nx = start_pos[0]+40*j
+                ny = start_pos[1]
+                rain = np.flipud((rain&0xFFF).astype(np.float16)/10.0)
+                comp[ny:ny+40,nx:nx+40] = rain
+                #for n in range(40):
+                #    for m in range(40):
+                #        index_read = index + 4 + 2*j*1600 + 2*n*40 + 2*m
+                #        nx = start_pos[0] + 40*j + m
+                #        ny = start_pos[1] + (39-n)
+                #        comp[ny,nx] = float(int(binascii.hexlify(data[index_read:index_read+2]),16)&0xFFF)/10.0
+            index += 4 + 2*num_cell*1600
+        np.place(comp, comp>=409.0, -1.0)
+        if outside==False:
+            np.place(comp, comp<0.0, 0.0)
+        return comp
+
+    def lat_index(self,lat):
+        dy = 7.5/3600.0
+        edge = self.edge[1][0]
+        n = int(np.round((lat-edge-dy/2.0)/dy))
+        if (n<0) or (n>self.nmesh[1]):
+            print("Error: Selected latitude is out of area.")
+            exit()
+        return n
+
+    def lon_index(self,lon):
+        dx = 11.25/3600.0
+        edge = self.edge[0][0]
+        n = int(np.round((lon-edge-dx/2.0)/dx))
+        if (n<0) or (n>self.nmesh[0]):
+            print("Error: Selected longitude is out of area.")
+            exit()
+        return n

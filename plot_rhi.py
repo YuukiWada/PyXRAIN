@@ -33,7 +33,8 @@ if __name__ == "__main__":
         radar.append(xrain(input_files[i].replace("\n",""),False))
         elv_original.append(radar[i].elv)
     f.close()
-
+    #print(elv_original)
+    
     if radar[0].par[1]!="12":
         print("Error: this input file is not RZH0 (horizontal reflectivity).")
         exit()
@@ -53,10 +54,11 @@ if __name__ == "__main__":
     rng_num = radar[0].range_num
     rng_min = radar[0].range_min
     rng_step = radar[0].range_step
-
+    rng = np.tile((rng_min+np.arange(rng_num+1)*rng_step)/1000.0,(len(elv_border),1))
     elv = np.tile(np.array(elv_border),(rng_num+1,1)).transpose()
-    r = np.tile(rng_min+np.arange(rng_num+1)*rng_step/1000.0,(len(elv_border),1))
-    z = r*np.tan(elv*math.pi/180.0) 
+
+    r = rng*np.cos(elv*math.pi/180)
+    z = rng*np.sin(elv*math.pi/180)
     rhi = np.zeros((12, rng_num))
     for i in range(12):
         index = elv_original.index(elv_order[i])
