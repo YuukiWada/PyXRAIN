@@ -231,6 +231,8 @@ class xrain:
 
 class composite:
     def __init__(self,input_file,switch=True):
+        if switch==True:
+            self.credit()
         self.par = self.read_par(input_file)
         if self.par[0] != 8001:
             print("Error: input file is broken.")
@@ -243,7 +245,20 @@ class composite:
         self.mesh = self.calc_mesh()
         self.center = self.calc_center()
         self.comp = self.extract_comp(input_file,self.edge, self.nmesh)
-            
+
+    def credit(self):
+        print("")
+        print("  ------------------------------------------------------")
+        print("     国土交通省 XRAIN 合成雨量データ Python ライブラリ")
+        print("     Version 1.0 (2023年5月16日)")
+        print("     作成: 和田有希 (大阪大学大学院工学研究科)")
+        print("     https://github.com/YuukiWada/PyXRAIN")
+        print("")
+        print("     本ソフトウェアを用いて生じた不利益・損害について")
+        print("     作成者は一切の責任を負いません。")
+        print("  ------------------------------------------------------")
+        print("")
+        
     def read_par(self,input_file):
         f = open(input_file, "rb")
         data = f.read()
@@ -335,6 +350,8 @@ class composite:
         n = int(np.round((lat-edge-dy/2.0)/dy))
         if (n<0) or (n>self.nmesh[1]):
             print("Error: Selected latitude is out of area.")
+            print("Erea range: N"+str(self.edge[0][0])+"-"+str(self.edge[0][1])+"deg")
+            print("            E"+str(self.edge[1][0])+"-"+str(self.edge[1][1])+"deg")
             exit()
         return n
 
@@ -344,5 +361,7 @@ class composite:
         n = int(np.round((lon-edge-dx/2.0)/dx))
         if (n<0) or (n>self.nmesh[0]):
             print("Error: Selected longitude is out of area.")
+            print("Erea range: N"+str(self.edge[0][0])+"-"+str(self.edge[0][1])+"deg")
+            print("            E"+str(self.edge[1][0])+"-"+str(self.edge[1][1])+"deg")
             exit()
         return n
