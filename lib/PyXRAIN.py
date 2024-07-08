@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import binascii
 import math
 import time
+import gzip
 
 class xrain:
     def __init__(self,input_file,switch=True):
@@ -26,6 +28,9 @@ class xrain:
         self.x = self.axis_x()
         self.y = self.axis_y()
         self.z = self.axis_z()
+        self.geox = self.axis_geox()
+        self.geoy = self.axis_geoy()
+
         self.rng = self.axis_range()
         if switch==True:
             self.credit()
@@ -44,7 +49,10 @@ class xrain:
         print("")
 
     def read_par(self,input_file):
-        f = open(input_file, "rb")
+        if ".gz" in input_file:
+            f = gzip.open(input_file, "rb")
+        else:
+            f = open(input_file, "rb")
         data = f.read()
         par = list()
         par.append(binascii.hexlify(data[4:6]).decode())                                    # 0: observation site
@@ -88,7 +96,10 @@ class xrain:
 
     def read_ppi(self,input_file):
         par = self.par
-        f = open(input_file, "rb")
+        if ".gz" in input_file:
+            f = gzip.open(input_file, "rb")
+        else:
+            f = open(input_file, "rb")
         data = f.read()
         num_rng = par[22]
         num_az = par[23]
@@ -111,7 +122,10 @@ class xrain:
         num_rng = self.par[22]
         num_az = self.par[23]
         sect_info=list()
-        f = open(input_file, "rb")
+        if ".gz" in input_file:
+            f = gzip.open(input_file, "rb")
+        else:
+            f = open(input_file, "rb")
         data = f.read()
         for i in range(num_az):
             index = 512+i*(16+2*num_rng)
@@ -145,6 +159,24 @@ class xrain:
         y = rng*np.cos(az*math.pi/180)
         return y
 
+    def axis_geox(self):
+        r_earth = 6378.137 # km  
+        x = self.x
+        lats = self.par[11][0]+self.par[11][1]/60+self.par[11][2]/3600
+        lons = self.par[12][0]+self.par[12][1]/60+self.par[12][2]/3600
+        km_per_deg = r_earth*np.arccos(np.sin(lats*np.pi/180)*np.sin(lats*np.pi/180)+np.cos(lats*np.pi/180)*np.cos(lats*np.pi/180)*np.cos(np.pi/180))
+        geox = lons+x/km_per_deg
+        return geox
+
+    def axis_geoy(self):
+        r_earth = 6378.137 # km  
+        y = self.y
+        lats = self.par[11][0]+self.par[11][1]/60+self.par[11][2]/3600
+        lons = self.par[12][0]+self.par[12][1]/60+self.par[12][2]/3600
+        km_per_deg = r_earth*np.arccos(np.sin(lats*np.pi/180)*np.sin((lats+1)*np.pi/180)+np.cos(lats*np.pi/180)*np.cos((lats+1)*np.pi/180)*np.cos(0))
+        geoy = lats+y/km_per_deg
+        return geoy
+    
     def axis_z(self):
         n_rng = self.range_num
         min_rng = self.range_min
@@ -230,6 +262,16 @@ class xrain:
     def el_end(self,i):
         return self.sect[i][3]
 
+    def plot_color(self):
+        colors = ['#FFFFFF', '#A0D2FF', '#218CFF', '#0041FF', '#FAF500', '#FF9900', '#FF2800', '#B40068']
+        values = range(len(colors))
+        vmax = np.ceil(np.max(values))
+        color_list = []
+        for v, c in zip(values, colors):
+            color_list.append((v/vmax,c))
+        custom_color = LinearSegmentedColormap.from_list('custom_cmap', color_list)
+        return custom_color
+        
 class composite:
     def __init__(self,input_file,switch=True):
         if switch==True:
@@ -261,7 +303,10 @@ class composite:
         print("")
         
     def read_par(self,input_file):
-        f = open(input_file, "rb")
+        if ".gz" in input_file:
+            f = gzip.open(input_file, "rb")
+        else:
+            f = open(input_file, "rb")
         data = f.read()
         par = list()
         par.append(int(binascii.hexlify(data[2:4])))                                        # 0: date type (fixed to #8001)
@@ -311,7 +356,10 @@ class composite:
         #comp = np.full((nmesh[1],nmesh[0]),-1.0)
         index = 64
         num_block = self.nblock
-        f = open(input_file, "rb")
+        if ".gz" in input_file:
+            f = gzip.open(input_file, "rb")
+        else:
+            f = open(input_file, "rb")
         data = f.read()
 
         for i in range(num_block):
